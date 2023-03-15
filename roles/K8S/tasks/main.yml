@@ -1,0 +1,63 @@
+---
+# tasks file for K8S
+
+# add docker repo
+- name: add docker repo
+  ansible.builtin.command: sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+# install containerd
+- name: Install containerd
+  ansible.builtin.package:
+    name: containerd.io
+    state: present
+
+# copy contaibnerd config file
+- name: Copy config for containerd
+  ansible.builtin.copy:
+    src: config.toml
+    dest: /etc/containerd/config.toml
+
+# restart containerd
+- name: Start service containerd
+  ansible.builtin.service:
+    name: containerd
+    state: started
+
+# configure K8S repo
+- name: Configure repo
+  ansible.builtin.shell:
+    cmd: |
+      cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      exclude=kubelet kubeadm kubectl
+      EOF
+
+# Set SELinux in permissive mode (effectively disabling it)
+- name: Set SELinux in permissive mode
+  ansible.builtin.command: sudo setenforce 0
+- name: Set SELinux in permissive mode 2
+  ansible.builtin.shell: sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+# Install K8S packages
+- name: Install K8S packages
+  ansible.builtin.yum:
+    name: 
+      - kubelet
+      - kubeadm
+      - kubectl
+    disable_excludes: all
+    state: present
+
+# Enable boot start kubelet
+- name: Enable boot start kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    state: started
+    enabled: true
+
+      

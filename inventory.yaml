@@ -1,0 +1,6 @@
+all:
+  children:
+    masters:
+      hosts:
+        master01:
+          ansible_host: 	140.84.188.221

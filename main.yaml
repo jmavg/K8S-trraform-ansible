@@ -1,0 +1,7 @@
+---
+
+# Configure basic webservers
+- name: K8S
+  hosts: all
+  roles:
+    - K8S
